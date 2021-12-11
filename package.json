@@ -1,0 +1,54 @@
+{
+  "name": "rn-queue-tasks",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "app": "node create-app.js",
+    "watch": "cpx 'src/**/*' app/node_modules/rn-queue-tasks/src --watch",
+    "test": "jest --watchAll",
+    "lint": "eslint ./src --fix",
+    "format": "prettier \"src/**/*\" --write"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.15.0",
+    "@react-native-community/eslint-config": "3.0.0",
+    "babel-jest": "^27.0.6",
+    "cpx": "^1.5.0",
+    "eslint": "^7.32.0",
+    "jest": "^27.0.6",
+    "metro-react-native-babel-preset": "^0.66.2",
+    "prettier": "^2.3.2",
+    "react": "^17.0.2",
+    "react-native": "^0.65.0",
+    "react-test-renderer": "^17.0.2",
+    "recursive-copy": "^2.0.13",
+    "rimraf": "^3.0.2"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
+  },
+  "eslintConfig": {
+    "extends": "@react-native-community",
+    "rules": {
+      "semi": 0
+    }
+  },
+  "jest": {
+    "preset": "react-native",
+    "testPathIgnorePatterns": [
+      "/app/"
+    ],
+    "moduleNameMapper": {
+      "rn-queue-tasks": "<rootDir>/src"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">= 14"
+  }
+}
