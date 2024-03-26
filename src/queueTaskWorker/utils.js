@@ -1,9 +1,7 @@
 export function parseSQLResult(result) {
   try {
-    const { rows: { length, item } = {} } = result || {}
-    return Array(length)
-      .fill(undefined)
-      .map((__, i) => item(i))
+    const { rows: { length, item, _array = [] } = {} } = result || {};
+    return _array;
   } catch (e) {
     return []
   }
