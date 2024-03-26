@@ -51,16 +51,12 @@ export const getTasksAll = async () => {
 
 export const getTasks = async ({ workers = [], count = 1 }) => {
   if (!execute) return []
-  const { rows: { length = 0, item } = {} } = await execute(
+  return parseSQLResult(await execute(
     `SELECT * FROM \`queueTask\` WHERE worker NOT IN (${Array(workers.length)
       .fill('?')
       .join(',')}) ORDER BY retry ASC LIMIT 0,?`,
     [...workers, count]
-  )
-
-  return Array(length)
-    .fill(undefined)
-    .map((__, i) => item(i))
+  ))
 }
 
 export const clearTasks = async () => {
