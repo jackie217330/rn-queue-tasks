@@ -63,7 +63,7 @@ export const getNumOfTasksByType = async (type) => {
   if (!execute) return
   const [{ count = 0 } = {}] =
     parseSQLResult(
-      await execute(SELECT COUNT(*) as count FROM \queueTask` WHERE type = ?`, [
+      await execute(`SELECT COUNT(*) as count FROM \`queueTask\` WHERE type = ?`, [
         type,
       ])
     ) || []
