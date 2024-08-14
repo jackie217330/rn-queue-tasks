@@ -59,6 +59,17 @@ export const getTasks = async ({ workers = [], count = 1 }) => {
   ))
 }
 
+export const getNumOfTasksByType = async (type) => {
+  if (!execute) return
+  const [{ count = 0 } = {}] =
+    parseSQLResult(
+      await execute(SELECT COUNT(*) as count FROM \queueTask` WHERE type = ?`, [
+        type,
+      ])
+    ) || []
+  return count
+}
+
 export const clearTasks = async () => {
   if (!execute) return
   await execute(`DELETE FROM \`queueTask\` WHERE 1`)
