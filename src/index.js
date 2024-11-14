@@ -1,3 +1,5 @@
+import _TestWorker from './queueTaskWorker/testWorker'
+
 export {
   initialize,
   addTask,
@@ -7,4 +9,4 @@ export {
   getNumOfTasksByType,
 } from './queueTaskWorker'
 
-export TestWorker from './queueTaskWorker/testWorker'
+export const TestWorker = _TestWorker;
