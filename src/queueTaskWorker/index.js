@@ -127,11 +127,13 @@ export const initializeSqlite = async () => {
     );
   `
   )
-  await execute(
+  try {
+    await execute(
+      `
+      CREATE INDEX idx_orders ON \`queueTask\`(type, worker);
     `
-    CREATE INDEX idx_orders ON \`queueTask\`(type, worker);
-  `
-  )
+    )
+  } catch(e) {}
 
   await execute(`CREATE TABLE IF NOT EXISTS \`queueErrorLog\` (
     \`id\` INTEGER PRIMARY KEY AUTOINCREMENT,
