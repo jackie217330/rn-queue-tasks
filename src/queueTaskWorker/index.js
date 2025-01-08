@@ -4,7 +4,7 @@ import TestWorker from './testWorker'
 import { parseSQLResult } from './utils'
 
 let execute = undefined
-export const initialize = async (sqlite, { workers = [],  } = {}) => {
+export const initialize = async (sqlite, { workers = [] } = {}) => {
   execute = async (query, params = [], debug) => {
     !!debug && console.log(query, params)
     return new Promise((resolve, reject) => {
@@ -14,7 +14,7 @@ export const initialize = async (sqlite, { workers = [],  } = {}) => {
             query,
             params,
             (__, results) => resolve(results),
-            ({ message }) => resolve(new Error(message))
+            ({ message }) => resolve(new Error(message)),
           )
         })
       } catch (e) {
@@ -32,15 +32,31 @@ export const addErrorLog = async (e, { type = '', payload, retry, time }) => {
   if (!execute) return
   await execute(
     `INSERT INTO \`queueErrorLog\` (name, type, payload, retry, taskAt) VALUES (?,?,?,?,?)`,
-    [e.toString(), type, payload, retry, time]
+    [e.toString(), type, payload, retry, time],
   )
 }
 
-export const addTask = async ({ type = '', payload }) => {
+export const addTask = async ({ idempotencyKey, type = '', payload }) => {
   if (!execute) return
+
+  if (idempotencyKey) {
+    const res = await execute(
+      `SELECT 1 FROM \`queueTask\` WHERE idempotencyKey = ?`,
+      [idempotencyKey],
+    )
+    if (res?.rows?.length > 0) {
+      return
+    }
+  }
+
   await execute(
-    `INSERT INTO \`queueTask\` (type, worker, payload) VALUES (?,?,?)`,
-    [type, '', typeof payload === 'string' ? payload : JSON.stringify(payload)]
+    `INSERT INTO \`queueTask\` (type, worker, payload, idempotencyKey) VALUES (?,?,?,?)`,
+    [
+      type,
+      '',
+      typeof payload === 'string' ? payload : JSON.stringify(payload),
+      idempotencyKey,
+    ],
   )
 }
 
@@ -51,21 +67,24 @@ export const getTasksAll = async () => {
 
 export const getTasks = async ({ workers = [], count = 1 }) => {
   if (!execute) return []
-  return parseSQLResult(await execute(
-    `SELECT * FROM \`queueTask\` WHERE worker NOT IN (${Array(workers.length)
-      .fill('?')
-      .join(',')}) ORDER BY retry ASC LIMIT 0,?`,
-    [...workers, count]
-  ))
+  return parseSQLResult(
+    await execute(
+      `SELECT * FROM \`queueTask\` WHERE worker NOT IN (${Array(workers.length)
+        .fill('?')
+        .join(',')}) ORDER BY retry ASC LIMIT 0,?`,
+      [...workers, count],
+    ),
+  )
 }
 
 export const getNumOfTasksByType = async (type) => {
   if (!execute) return
   const [{ count = 0 } = {}] =
     parseSQLResult(
-      await execute(`SELECT COUNT(*) as count FROM \`queueTask\` WHERE type = ?`, [
-        type,
-      ])
+      await execute(
+        `SELECT COUNT(*) as count FROM \`queueTask\` WHERE type = ?`,
+        [type],
+      ),
     ) || []
   return count
 }
@@ -104,7 +123,7 @@ export const useTaskCount = () => {
       if (!execute) return
       const [{ count = 0 } = {}] =
         parseSQLResult(
-          await execute(`SELECT COUNT(*) as count FROM \`queueTask\``)
+          await execute(`SELECT COUNT(*) as count FROM \`queueTask\``),
         ) || []
       setCount(count)
     }, 2000)
@@ -125,12 +144,12 @@ export const initializeSqlite = async () => {
       \`retry\` INTEGER DEFAULT 0,
       \`worker\` VARCHAR(50)
     );
-  `
+  `,
   )
   await execute(
     `
-    CREATE INDEX IF NOT EXISTS idx_orders ON \`queueTask\`(type, worker);
-  `
+    CREATE INDEX idx_orders ON \`queueTask\`(type, worker);
+  `,
   )
 
   await execute(`CREATE TABLE IF NOT EXISTS \`queueErrorLog\` (
@@ -141,4 +160,19 @@ export const initializeSqlite = async () => {
     \`retry\` INTEGER DEFAULT 0,
     \`taskAt\` DATETIME DEFAULT CURRENT_TIMESTAMP
   );`)
+
+  try {
+    // add column idempotencyKey to queueTask if not exist
+    await execute(
+      `ALTER TABLE \`queueTask\` ADD COLUMN idempotencyKey VARCHAT(191) DEFAULT NULL`,
+    )
+  } catch (e) {}
+
+  try {
+    await execute(
+      `
+    CREATE INDEX idx_idempotency ON \`queueTask\`(idempotencyKey);
+  `,
+    )
+  } catch (e) {}
 }
