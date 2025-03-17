@@ -42,6 +42,11 @@ export default class WorkerManager {
     this.handler = setInterval(this.instantiate, 2000)
   }
 
+  destrory = async () => {
+    clearInterval(this.handler);
+    this.workers = [];
+  }
+
   instantiate = async () => {
     const workers = this.workers.concat()
 
