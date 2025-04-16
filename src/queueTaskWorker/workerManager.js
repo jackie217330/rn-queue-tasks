@@ -10,6 +10,8 @@ import { sleep, uniq } from './utils'
 export default class WorkerManager {
   workers = []
   handler = undefined
+  processing = false;
+  
   constructor(workers = []) {
     const props = {
       processTask: async (worker, task) => {
@@ -48,6 +50,9 @@ export default class WorkerManager {
   }
 
   instantiate = async () => {
+    if(this.processing) return;
+    this.processing = true;
+    
     const workers = this.workers.concat()
 
     const getFreeWorker = (type) => {
@@ -69,5 +74,7 @@ export default class WorkerManager {
       if (!!worker) worker.start(task)
       await sleep(1)
     }
+
+    this.processing = false;
   }
 }
