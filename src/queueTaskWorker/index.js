@@ -4,7 +4,7 @@ import TestWorker from './testWorker'
 import { parseSQLResult } from './utils'
 
 let execute = undefined
-export const initialize = async (sqlite, { workers = [] } = {}) => {
+export const initialize = async (sqlite, { workers = [], ...opts } = {}) => {
   execute = async (query, params = [], debug) => {
     !!debug && console.log(query, params)
     return new Promise((resolve, reject) => {
@@ -25,7 +25,7 @@ export const initialize = async (sqlite, { workers = [] } = {}) => {
   }
 
   await initializeSqlite()
-  return new WorkerManager([TestWorker, ...workers])
+  return new WorkerManager([TestWorker, ...workers], opts)
 }
 
 export const addErrorLog = async (e, { type = '', payload, retry, time }) => {
