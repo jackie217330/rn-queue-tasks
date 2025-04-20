@@ -12,7 +12,7 @@ export default class WorkerManager {
   handler = undefined
   processing = false;
   
-  constructor(workers = []) {
+  constructor(workers = [], opts) {
     const props = {
       processTask: async (worker, task) => {
         worker.processing = true
@@ -41,7 +41,8 @@ export default class WorkerManager {
           })
       )
     )
-    this.handler = setInterval(this.instantiate, 2000)
+    if(opts?.interval ?? 2000)
+      this.handler = setInterval(this.instantiate, opts?.interval ?? 2000)
   }
 
   destrory = async () => {
