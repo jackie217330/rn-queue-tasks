@@ -29,7 +29,7 @@ export const initialize = async (sqlite, { workers = [], ...opts } = {}) => {
 }
 
 export const addErrorLog = async (e, { type = '', payload, retry, time }) => {
-  if (!execute) return
+  if (!execute) throw new Error("Q-Worker not initialized");
   await execute(
     `INSERT INTO \`queueErrorLog\` (name, type, payload, retry, taskAt) VALUES (?,?,?,?,?)`,
     [e.toString(), type, payload, retry, time],
@@ -37,7 +37,7 @@ export const addErrorLog = async (e, { type = '', payload, retry, time }) => {
 }
 
 export const addTask = async ({ idempotencyKey, type = '', payload }) => {
-  if (!execute) return
+  if (!execute) throw new Error("Q-Worker not initialized");
 
   if (idempotencyKey) {
     const res = await execute(
@@ -61,12 +61,12 @@ export const addTask = async ({ idempotencyKey, type = '', payload }) => {
 }
 
 export const getTasksAll = async () => {
-  if (!execute) return []
+  if (!execute) throw new Error("Q-Worker not initialized");
   return parseSQLResult(await execute(`SELECT * FROM \`queueTask\``))
 }
 
 export const getTasks = async ({ workers = [], count = 1 }) => {
-  if (!execute) return []
+  if (!execute) throw new Error("Q-Worker not initialized");
   return parseSQLResult(
     await execute(
       `SELECT * FROM \`queueTask\` WHERE worker NOT IN (${Array(workers.length)
@@ -78,7 +78,7 @@ export const getTasks = async ({ workers = [], count = 1 }) => {
 }
 
 export const getNumOfTasksByType = async (type) => {
-  if (!execute) return
+  if (!execute) throw new Error("Q-Worker not initialized");
   const [{ count = 0 } = {}] =
     parseSQLResult(
       await execute(
@@ -90,12 +90,12 @@ export const getNumOfTasksByType = async (type) => {
 }
 
 export const clearTasks = async () => {
-  if (!execute) return
+  if (!execute) throw new Error("Q-Worker not initialized");
   await execute(`DELETE FROM \`queueTask\` WHERE 1`)
 }
 
 export const processTask = async ({ id }, worker) => {
-  if (!execute) return
+  if (!execute) throw new Error("Q-Worker not initialized");
   await execute(`UPDATE \`queueTask\` SET worker = ? WHERE id = ?`, [
     worker,
     id,
@@ -103,12 +103,12 @@ export const processTask = async ({ id }, worker) => {
 }
 
 export const finishTask = async ({ id }) => {
-  if (!execute) return
+  if (!execute) throw new Error("Q-Worker not initialized");
   await execute(`DELETE FROM \`queueTask\` WHERE id = ?`, [id])
 }
 
 export const revertTask = async ({ id, retry = 0 }) => {
-  if (!execute) return
+  if (!execute) throw new Error("Q-Worker not initialized");
   await execute(`UPDATE \`queueTask\` SET worker = ?, retry = ? WHERE id = ?`, [
     '',
     retry + 1,
@@ -133,7 +133,7 @@ export const useTaskCount = () => {
 }
 
 export const initializeSqlite = async () => {
-  if (!execute) return
+  if (!execute) throw new Error("Q-Worker not initialized");
 
   await execute(
     `
