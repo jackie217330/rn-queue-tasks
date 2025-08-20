@@ -114,7 +114,7 @@ export default class WorkerManager {
 
       let result;
       try {
-        result = this.execute(
+        result = await this.execute(
           `SELECT * FROM \`queueTask\` WHERE worker NOT IN (${Array(
             workerNames.length,
           )
@@ -124,7 +124,7 @@ export default class WorkerManager {
         )
       } catch (e) {
         try {
-          result = this.execute(
+          result = await this.execute(
             `SELECT * FROM \`queueTask\` WHERE worker NOT IN (${Array(
               workerNames.length,
             )
