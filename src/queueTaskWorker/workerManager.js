@@ -111,16 +111,34 @@ export default class WorkerManager {
 
     const tasks = await (async () => {
       const workerNames = uniq(this.workers.map((worker) => worker.name))
-      return parseSQLResult(
-        await this.execute(
+
+      let result;
+      try {
+        result = this.execute(
           `SELECT * FROM \`queueTask\` WHERE worker NOT IN (${Array(
             workerNames.length,
           )
             .fill('?')
             .join(',')}) ORDER BY retry ASC LIMIT 0,?`,
           [...workerNames, this.workers.length],
-        ),
-      )
+        )
+      } catch (e) {
+        try {
+          result = this.execute(
+            `SELECT * FROM \`queueTask\` WHERE worker NOT IN (${Array(
+              workerNames.length,
+            )
+              .fill('?')
+              .join(',')}) LIMIT 0,?`,
+            [...workerNames, this.workers.length],
+          )
+        } catch (e) {
+          throw e;
+        }
+      }
+
+      if(result) return parseSQLResult(result)
+      return [];
     })()
 
     for (const task of tasks) {
